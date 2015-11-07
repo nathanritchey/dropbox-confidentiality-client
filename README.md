@@ -1,4 +1,4 @@
-# Confidential Dropbox Client
+# Dropbox Confidentiality Client
 
 This project implements a smarter end to end encryption solution for files hosted on Dropbox. It aims to solve three problems with vanilla Dropbox and of existing encryption plugins for Dropbox:
 
