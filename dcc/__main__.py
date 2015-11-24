@@ -7,7 +7,7 @@ from base64 import b64encode, b64decode
 from Crypto.Cipher import AES
 from Crypto.Hash import HMAC, SHA256
 from pbkdf2 import PBKDF2
-from getpass import getpass
+from diceware import generate_password, prompt_password
 from uuid import uuid4
 import cPickle as pickle
 
@@ -101,7 +101,7 @@ def get_key(password, key_matter):
     return unpad(cipher.decrypt(key))
 
 def read_keys():
-    master_password, signing_password = ( getpass('Master Password:'), getpass('Signing Password:') )
+    master_password, signing_password = prompt_password()
     with open(join(getcwd(), 'passwd'), 'r') as password_file:
         password_data = pickle.loads(password_file.read())
         return ( get_key(master_password, password_data['encryption_key']), get_key(signing_password, password_data['signing_key']) )
@@ -114,7 +114,7 @@ def no_command(command, *argv, **kwargs):
     return 'Unknown command: %s' % command
 
 def setup(*args, **kwargs):
-    master_password, signing_password = ( getpass('Master Password:'), getpass('Signing Password:') )
+    master_password, signing_password = generate_password()
     password_data = dict(
         encryption_key=make_key(master_password),
         signing_key=make_key(signing_password)
