@@ -331,13 +331,13 @@ add_blocks_to_dropbox([""])
 ![alt tag](http://i.imgur.com/hCcdoh6.png?1)
 
 All messages sents will be hashed for integrity.
-M_p ≔ Master Password from the user meeting requirements.
-HMAC_(k,a)(D) → Creates a cryptographic signature of data D given key K and algorithm a.
-K_(P(i))(D)   → Shared Secret between User[i] and Alice.
-K_E{D}        → Shared Master Encryption Key
-PublicKey(i)  → Public Key of user i
-PrivateKey(i) → Private Key of user i
-GnuPG{D}      → Allows for decryption with multiple Private Keys
+  * M_p ≔ Master Password from the user meeting requirements.
+  * HMAC_(k,a)(D) → Creates a cryptographic signature of data D given key K and algorithm a.
+  * K_(P(i))(D)   → Shared Secret between User[i] and Alice.
+  * K_E{D}        → Shared Master Encryption Key
+  * PublicKey(i)  → Public Key of user i
+  * PrivateKey(i) → Private Key of user i
+  * GnuPG{D}      → Allows for decryption with multiple Private Keys
 
 Alice: 
   * Has All shared secrets with users 1 through i.
