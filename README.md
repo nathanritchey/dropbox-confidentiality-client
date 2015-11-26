@@ -7,12 +7,9 @@ A Python command line utility that provides end-to-end encryption and integrity 
 This algorithm should support all our block based file encryption desires.
 
 1. Pros:
-
-..*  Solves the issue of subsequent blocks(n+1,...) being altered when only block(n) is altered and overruns the block size.
-
-..*  Allows for consistency and integrity for multipe users through out encrypted file blocks.
-
-..*  Adds an extra feature where we can authenticate who's updated what block.
+⋅⋅* Solves the issue of subsequent blocks(n+1,...) being altered when only block(n) is altered and overruns the block size.
+⋅⋅* Allows for consistency and integrity for multipe users through out encrypted file blocks.
+⋅⋅* Adds an extra feature where we can authenticate who's updated what block.
 
 2. Cons:
 ..*  Could break if there are two blocks that are exactly the same. E.G. Bob removes block_1 (made by Alice), adds new block after block_2 (made by Alice), the new block added by Bob is equivently the same as block_1 and is exactly the correct byte size. This algorithm will then check for the first block of the old file (block_1), see that it "exists", skip block_2 since and count the block as being edited by Bob. See below for representation of this case, along with correct case.
