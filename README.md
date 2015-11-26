@@ -13,8 +13,8 @@ This algorithm should support all our block based file encryption desires.
 
 2. Cons:
   *  Could break if there are two blocks that are exactly the same. E.G. Bob removes block_1 (made by Alice), adds new block after block_2 (made by Alice), the new block added by Bob is equivently the same as block_1 and is exactly the correct byte size. This algorithm will then check for the first block of the old file (block_1), see that it "exists", skip block_2 since and count the block as being edited by Bob. See below for representation of this case, along with correct case.
-    *  [block_1(Alice Sign), block_2(Alice Sign)] -> [block_1(Bob Sign), block_2(Bob Sign)]
-    *  [block_1(Alice Sign), block_2(Alice Sign)] -> [block_1(Alice Sign), block_2(Bob Sign)]
+    *  [PK<sub>Alice</sub>{block_1}, PK<sub>Alice</sub>{block_2}] -> [PK<sub>Bob</sub>{block_1}, PK<sub>Bob</sub>{block_2}]
+    *  [PK<sub>Alice</sub>{block_1}, PK<sub>Alice</sub>{block_2}] -> [PK<sub>Alice</sub>{block_1}, PK<sub>Bob</sub>{block_2}]
 
 ```python
 #Begin algorithm pseudo code
@@ -118,8 +118,8 @@ To prove correctness we must show:
     * Thus all additions are taken into account for the new file.
   At each step of (1), or at (5). All edits are treated as deletions from the old_file and additions towards the new file. This is true for deletions because an edited block will not match for any step in (1), thus will be delted from dropbox. Since the edited block is not included in removed blocks, it has to be a part of either the edited_blocks in (1.3) at some point in the algorithm or in tmp_blocks in (5). 
     * Thus all edits are taken into account for the new file.
-  * Therefor all deletions, additions, and edits are taken into account for the file.
-    * Thust #1 is true.
+  * Therefore all deletions, additions, and edits are taken into account for the file.
+  * Thus #1 is true.
 
 2. Proof correctness #2:
   * At each step of (1). (1.2) seperates the found old_block from all data previous to location of old_block (i.e. blocks_edited) and all data following the end of the old_block (i.e. blocks_rest). Since the previous iteration would have caught earlier matching old_blocks we know that blocks_edited is free of matching old_blocks, making (1.3) safe. By defintion, if all old_blocks have been iterated through there must be no old_blocks in in blocks_rest/tmp_blocks, making (5) safe.Therefore all unedited blocks remain unchanged since all block additions, i.e. (1.3) and (5), are safe and do not equal any old blocks, and all block deletions (1.1) only happens when an old_block doesn't match.
