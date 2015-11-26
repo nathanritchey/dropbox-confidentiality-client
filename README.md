@@ -1,5 +1,12 @@
 # Dropbox Confidentiality Client
 
+1. First ordered list item
+2. Another item
+⋅⋅* Unordered sub-list. 
+1. Actual numbers don't matter, just that it's a number
+⋅⋅1. Ordered sub-list
+4. And another item.
+
 A Python command line utility that provides end-to-end encryption and integrity verification when hosting sensitive files on Dropbox. This is a semester project for CS 6348 Data and Application Security.
 
 # Block Encryption Algorithm and Proof
