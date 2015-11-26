@@ -6,7 +6,7 @@ A Python command line utility that provides end-to-end encryption and integrity 
 ## Algorithm
 This algorithm should support all our block based file encryption desires.
 
-*Pros:
+1. Pros:
 
 ..*Solves the issue of subsequent blocks(n+1,...) being altered when only block(n) is altered and overruns the block size.
 
@@ -14,7 +14,7 @@ This algorithm should support all our block based file encryption desires.
 
 ..*Adds an extra feature where we can authenticate who's updated what block.
 
-*Cons:
+2. Cons:
 ..*Could break if there are two blocks that are exactly the same. E.G. Bob removes block_1 (made by Alice), adds new block after block_2 (made by Alice), the new block added by Bob is equivently the same as block_1 and is exactly the correct byte size. This algorithm will then check for the first block of the old file (block_1), see that it "exists", skip block_2 since and count the block as being edited by Bob. See below for representation of this case, along with correct case.
 ....*[block_1(Alice Sign), block_2(Alice Sign)] -> [block_1(Bob Sign), block_2(Bob Sign)]
 ....*[block_1(Alice Sign), block_2(Alice Sign)] -> [block_1(Alice Sign), block_2(Bob Sign)]
@@ -114,7 +114,7 @@ To prove correctness we must show:
 3. Unedited blocks update file index for changes of the block index number (increase/decrease).
 4. Edited blocks have the correct corresponding block sequence number represented in the index.
 
-*Proof correctness #1:
+1. Proof correctness #1:
 ..*At each step of (1). The old block is not the new file it is removed through (1.1).
 ....*Thus all deletions are taken into account for the new file.
 ..*At each step of (1), or at (5). All blocks of the new file previous to the location of the old block will be added to DropBox. (5) will then add the last set of blocks that the loop doesn't cover. This is true because tmp_blocks will be either all blocks of new file, or all blocks after the previously matched old_block. This includes all added blocks.
@@ -124,9 +124,9 @@ To prove correctness we must show:
 ..*Therefor all deletions, additions, and edits are taken into account for the file.
 ....*Thust #1 is true.
 
-*Proof correctness #2:
+2. Proof correctness #2:
 ..*At each step of (1). (1.2) seperates the found old_block from all data previous to location of old_block (i.e. blocks_edited) and all data following the end of the old_block (i.e. blocks_rest). Since the previous iteration would have caught earlier matching old_blocks we know that blocks_edited is free of matching old_blocks, making (1.3) safe. By defintion, if all old_blocks have been iterated through there must be no old_blocks in in blocks_rest/tmp_blocks, making (5) safe.Therefore all unedited blocks remain unchanged since all block additions, i.e. (1.3) and (5), are safe and do not equal any old blocks, and all block deletions (1.1) only happens when an old_block doesn't match.
 ..*Thus #2 is true.
-*Proof correctness #3 and #4:
+3. Proof correctness #3 and #4:
 ..*At each step of (1). The updated index consists all blocks generated at each step since all unedited blocks must be matched by a corresponding old_block and undergo (3), and every new_block(s) added must complete (2). At each point (3) and (2) cur_sequence is incremented by one. This is done in order as through each iteration of all old_blocks old_block(n) must be added before old_block(n+1). (1.4) updates index of all edited blocks previous to index update of the matched old_block. This is done in order since the addition of blocks is done lineraly. (5) adds indexs of all remaining new edited blocks in order. Since the new file is the summation of all new blocks and matching old blocks, and these blocks are inserted in order linerally, that means each block has the correct corresponding index number.
 ..*Thus #3 and #4 are true.
