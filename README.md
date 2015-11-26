@@ -44,25 +44,28 @@ tmp_blocks     = new_file
 define add_blocks_to_dropbox(blocks_to_add):
 	# (2) the below loop goes through each block that needs to be added
 	for new_block in blocks_to_add: 
-		add_block_dropbox(new_block, UUID(new_block))
-		# adds the new/edited block to dropbox, the block will need to be encrypted
-
 		++cur_sequence
 		# update the current sequence to represent the sequence number of next block to be added to dropbox
 		# this is done for every newly added block that is previous to the unedited block
-
-		add_index(cur_sequence, UUID(new_block))
+		# currently the sequence numbers assigned to blocks will go from 1 to N_B
+		# where N_B is the total number of blocks for a file X
+	
+		add_block_dropbox(new_block, UUID(new_block))
+		# adds the new/edited block to dropbox, the block will need to be encrypted
+		
+		add_index(cur_sequence, UUID(new_block), metadata_UUID)
 		# adds the new block sequence number to the index
+		# metadata_UUID will be the same for all blocks, this is the file ID
 
 # (1)
 # the below loop looks at each block of the old file
 For block in old_blocks: 
 	#(1.1)
-	if block not in tmp_blocks: # this indicates that this block has been completely removed
+	if block not in tmp_blocks: # this indicates that this block has been completely/partially removed/edited
 		remove_block_from_DropBox(UUID(block))
 		# removes old block from dropbox that is no longer in file
 
-		remove_block_from_index(block_s(block), UUID(block))
+		remove_block_from_index(UUID(block))
 		# removes old sequence number from the index for the block of the old file
 
 		continue
@@ -78,7 +81,7 @@ For block in old_blocks:
 	blocks_to_add = break_blocks_on_byte_size(blocks_edited)
 	# so as to follow chunk constraints of block size.
 	# with the last block being “fat”.
-	# Worst case, all blocks will be of size K with last block of being size (2K - 1) 
+	# Worst case, all concurent blocks will be of size K with last block of being size (2K - 1) 
 
 	add_blocks_to_dropbox(blocks_to_add)
 	# send the new blocks to drop box
