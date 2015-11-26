@@ -115,10 +115,10 @@ To prove correctness we must show:
   * At each step of (1). The old block is not the new file it is removed through (1.1).
     * Thus all deletions are taken into account for the new file.
   * At each step of (1), or at (5). All blocks of the new file previous to the location of the old block will be added to DropBox. (5) will then add the last set of blocks that the loop doesn't cover. This is true because tmp_blocks will be either all blocks of new file, or all blocks after the previously matched old_block. This includes all added blocks.
-    * Thus all additions are taken into account for the new file.
+    * Therefore all additions are taken into account for the new file.
   At each step of (1), or at (5). All edits are treated as deletions from the old_file and additions towards the new file. This is true for deletions because an edited block will not match for any step in (1), thus will be delted from dropbox. Since the edited block is not included in removed blocks, it has to be a part of either the edited_blocks in (1.3) at some point in the algorithm or in tmp_blocks in (5). 
-    * Thus all edits are taken into account for the new file.
-  * Therefore all deletions, additions, and edits are taken into account for the file.
+    * Therefore all edits/additions are taken into account for the new file.
+  * All deletions, additions, and edits are taken into account for the file.
   * Thus #1 is true.
 
 2. Proof correctness #2:
