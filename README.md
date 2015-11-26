@@ -329,3 +329,25 @@ add_blocks_to_dropbox([""])
 ```
 #Multiple Users Key Exchange
 ![alt tag](http://i.imgur.com/hCcdoh6.png?1)
+All messages sents will be hashed for integrity.
+M_p ≔ Master Password from the user meeting requirements.
+HMAC_(k,a)(D) → Creates a cryptographic signature of data D given key K and algorithm a.
+K_(P(i))(D)   → Shared Secret between User[i] and Alice.
+K_E{D}        → Shared Master Encryption Key
+PublicKey(i)  → Public Key of user i
+PrivateKey(i) → Private Key of user i
+GnuPG{D}      → Allows for decryption with multiple Private Keys
+
+Alice: 
+  * Has All shared secrets with users 1 through i.
+  * Is the Certificate Authority, she will add user i to dropbox public folder after mutual authentication
+  * In charge of updating list of Public Keys
+  * In charge of updating Master Encryption Key through GnuPG Public Key Encryption. This will allow any user to access the key with their PublicKey.
+  * May choose to remove users from System (Still need to flesh out this process)
+  * Has everything a regular User does as well.
+
+User:
+  * Has unique shared secret with Alice, to authenticate.
+  * Has Private Key stored on a private folder in DropBox, allows for user to move machines. This key is encrypted with the Master Password that only the user knows.
+  * Has Master Encryption Key, after receiving it from the DropBox folder, decrypts with Public Key.
+  * Has List of all Public Keys, after recieving it from the DropBox folder, decrypts with Master Encryption Key.
