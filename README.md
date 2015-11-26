@@ -329,6 +329,7 @@ add_blocks_to_dropbox([""])
 ```
 #Multiple Users Key Exchange
 ![alt tag](http://i.imgur.com/hCcdoh6.png?1)
+
 All messages sents will be hashed for integrity.
 M_p ≔ Master Password from the user meeting requirements.
 HMAC_(k,a)(D) → Creates a cryptographic signature of data D given key K and algorithm a.
