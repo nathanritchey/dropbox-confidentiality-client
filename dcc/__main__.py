@@ -9,6 +9,7 @@ from Crypto.Hash import HMAC, SHA256
 from pbkdf2 import PBKDF2
 from diceware import generate_password, prompt_password
 from uuid import uuid4
+from random import randint
 import cPickle as pickle
 
 #region VFS virtual file system utility methods
@@ -58,6 +59,24 @@ def vfs_register(virtual_fs, components, file_data):
             current[component] = dict()
         current = current[component]
     current[file_data.name] = file_data
+
+#endregion
+
+#region dccfile makes a dcc file which tells this client the unique container name
+
+# 6 random integers to reduce chances of conflicts for containers with the same name
+def make_dccfile(encryption_key, signing_key):
+    container_name = b64encode('%s%s' % (''.join([str(randint(1, 10)) for _ in xrange(0, 5)]), raw_input('Container Name: ').strip()[:50]))
+    dropbox_token = raw_input('Dropbox API Token: ').strip()
+    with open(join(getcwd(), '.dcc'), 'w+') as dcc_file:
+        content = pickle.dumps(dict(cn=container_name, dbtk=dropbox_token))
+        dcc_file.write(encrypt(content, encryption_key, signing_key))
+
+# returns a 3-tuple ( human readable container name, file system container name, dropbox api token )
+def get_dccinfo(encryption_key, signing_key):
+    with open(join(getcwd(), '.dcc'), 'r') as dcc_file:
+        data = pickle.loads(decrypt(dcc_file.read(), encryption_key, signing_key))
+        return ( b64decode(data['cn'])[6:], data['cn'], data['dbtk'] )
 
 #endregion
 
@@ -117,10 +136,12 @@ def setup(*args, **kwargs):
     master_password, signing_password = generate_password()
     password_data = dict(
         encryption_key=make_key(master_password),
-        signing_key=make_key(signing_password)
+        signing_key=make_key(signing_password),
     )
     pickle.dump(password_data, open(join(getcwd(), 'passwd'), 'w+'))
-    save_vfs(get_key(master_password, password_data['encryption_key']), get_key(signing_password, password_data['signing_key']))
+    encryption_key, signing_key = get_key(master_password, password_data['encryption_key']), get_key(signing_password, password_data['signing_key'])
+    save_vfs(encryption_key, signing_key)
+    make_dccfile(encryption_key, signing_key)
     return 0
 
 def list_keys(*args, **kwargs):
