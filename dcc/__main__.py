@@ -4,10 +4,8 @@ from sys import argv, exit
 from os.path import join, splitext, normpath, basename
 from os import urandom, getcwd
 from base64 import b64encode, b64decode
-from Crypto.Cipher import AES
-from Crypto.Hash import HMAC, SHA256
-from pbkdf2 import PBKDF2
 from diceware import generate_password, prompt_password
+from encryption import encrypt, decrypt, make_key, get_key
 from uuid import uuid4
 from random import randint
 import cPickle as pickle
@@ -80,44 +78,7 @@ def get_dccinfo(encryption_key, signing_key):
 
 #endregion
 
-#region Crypto encrypt/decrypt with signature validation
-
-def encrypt(content, encryption_key, signing_key):
-    iv = urandom(16)
-    cipher = AES.new(encryption_key, AES.MODE_CBC, iv)
-    encrypted = '%s%s' % ( iv, cipher.encrypt(pad(content)) )
-    hash = HMAC.new(signing_key, digestmod=SHA256)
-    hash.update(encrypted)
-    return '%s%s' % (hash.hexdigest(), encrypted)
-
-def decrypt(content, encryption_key, signing_key):
-    signature, contents = ( content[:64], content[64:] )
-    hash = HMAC.new(signing_key, digestmod=SHA256)
-    hash.update(contents)
-    if signature != hash.hexdigest():
-        raise Exception('Invalid Signature')
-    iv, contents = ( contents[:16], contents[16:] )
-    cipher = AES.new(encryption_key, AES.MODE_CBC, iv)
-    return unpad(cipher.decrypt(contents))
-
-BS = 16
-pad = lambda s: s + (BS - len(s) % BS) * chr(BS - len(s) % BS) 
-unpad = lambda s : s[0:-ord(s[-1])]
-
-def make_key(password): # makes a 256-bit key, a 128-bit iv and a 64-bit password salt
-  iv = urandom(16) # 128-bit
-  salt = urandom(8) # 64-bit
-  key = urandom(32) # 256-bit key
-  cipher = AES.new(PBKDF2(password, salt).read(32), AES.MODE_CBC, iv)
-  print('Key: %s' % b64encode(key))
-  return '%s%s%s' % (salt, iv, cipher.encrypt(pad(key)))
-
-def get_key(password, key_matter):
-    salt = key_matter[:8]
-    iv = key_matter[8:24]
-    key = key_matter[24:]
-    cipher = AES.new(PBKDF2(password, salt).read(32), AES.MODE_CBC, iv)
-    return unpad(cipher.decrypt(key))
+#region Crypto read keys
 
 def read_keys():
     master_password, signing_password = prompt_password()
@@ -150,6 +111,7 @@ def list_keys(*args, **kwargs):
     print('Signing Key:', b64encode(signing_key))
     return 0
 
+#TODO
 def list_files(*args, **kwargs):
     path = args[0] if len(args) >= 1 else ''
     vfs_err, vfs_path, vfs_result = get_vfs_file(load_vfs(*read_keys()), path)
@@ -160,10 +122,12 @@ def list_files(*args, **kwargs):
         print( 'file' if type(item) == VFSFileData else 'dir ', str(item) )
     return 0
 
+#TODO
 def tree(*args, **kwargs):
     tree_vfs(load_vfs(*read_keys()))
     return 0
 
+#TODO
 def add_file(file_path, *args, **kwargs):
     cwd = getcwd()
     path = normpath(join(getcwd(), file_path))
@@ -180,6 +144,7 @@ def add_file(file_path, *args, **kwargs):
             save_vfs(encryption_key, signing_key, vfs=vfs)
     return 0
 
+#TODO
 def read_file(file_path, *args, **kwargs):
     encryption_key, signing_key = read_keys()
     output_name = args[0] if len(args) >= 1 else None

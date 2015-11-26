@@ -45,8 +45,12 @@ class VFSFile(object):
             return items
 
     def print_list_files(self, path):
-        for row in chunks(self.list_files(path), 4):
-            print('    '.join(map(lambda (is_folder, name): name, row)))
+        files = self.list_files(path)
+        if files is None:
+            print('Error: Path `%s` does not exist or is a file.' % path)
+        else:
+            for row in chunks(files, 4):
+                print('    '.join(map(lambda (is_folder, name): name, row)))
 
     def print_tree(self, component=None, indent=1):
         spacer = ''.join([' ' for _ in xrange(0, indent)])
