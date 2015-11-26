@@ -1,13 +1,12 @@
 from uuid import uuid4
 from os.path import basename, normpath, join
 from os import getcwd
-import cPickle as pickle
 
 def chunks(seq, n):
     for i in xrange(0, len(seq), n):
         yield seq[i:i + n]
 
-class VFSFile(object):
+class VFS(object):
 
     def __init__(self):
         self.files = dict()
@@ -66,7 +65,7 @@ class VFSFile(object):
 
 if __name__ == '__main__':
 
-    vfs_file = VFSFile()
+    vfs_file = VFS()
 
     vfs_file.add_file(join(getcwd(), 'example/message.txt'))
     vfs_file.add_file(join(getcwd(), 'test.exe'))
