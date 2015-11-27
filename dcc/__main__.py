@@ -1,12 +1,12 @@
 ﻿from __future__ import print_function
 from functools import partial
 from sys import argv, exit
-from os.path import join, splitext, normpath, basename, isfile
-from os import urandom, getcwd
+from os.path import join, splitext, normpath, basename, isfile, exists
+from os import urandom, getcwd, makedirs
 from base64 import b64encode, b64decode
 from diceware import generate_password, prompt_password
 from encryption import encrypt, decrypt, make_key, get_key
-from client import save_passwd, read_passwd, save_vfs, load_vfs, upload_file
+from client import save_passwd, read_passwd, save_vfs, load_vfs, upload_file, download_file
 from random import randint
 import cPickle as pickle
 from pbkdf2 import PBKDF2
@@ -71,6 +71,42 @@ def show_info(*args, **kwargs):
     print('File Count:', len(vfs))
     return 0
 
+def show_tree(*args, **kwargs):
+    if '--help' in ''.join(args):
+        map(print, [
+            'About: This command outputs a tree view of the virtual file system.',
+        ])
+        return 1
+    encryption_key, signing_key, api_token, human_container_name, container_name = prompt_userinfo()
+    vfs = load_vfs(api_token, container_name, encryption_key, signing_key)
+    vfs.print_tree()
+    return 0
+
+def show_list(*args, **kwargs):
+    args_joined = ' '.join(args)
+    if len(args) == 0 or '--help' in args_joined:
+        map(print, [
+            'About: This command interactively browses the virtual file system.',
+            '',
+            'Usage: $ dcc list <path> (--no-interactive)',
+            '',
+            'Use `--no-interactive` to output specified path. Path must be provided and in the virtual file system.',
+            'If using interactive mode specify `:q` to quit the interactivivity loop.'
+        ])
+        return 1
+    encryption_key, signing_key, api_token, human_container_name, container_name = prompt_userinfo()
+    vfs = load_vfs(api_token, container_name, encryption_key, signing_key)
+    path = args[0].strip()
+    while True:
+        vfs.print_list_files(path)
+        if '--no-interactive' in args_joined:
+            break
+        else:
+            path = raw_input('> ').strip()
+            if path == ':q':
+                break
+    return 0
+
 def add_file(*args, **kwargs):
     if len(args) == 0 or '--help' in ''.join(args):
         map(print, [
@@ -90,15 +126,63 @@ def add_file(*args, **kwargs):
             if isfile(full_path):
                 with open(full_path, 'r') as source_file:
                     file_uuid = vfs.add_file(full_path)
-                    upload_file(api_token, container_name, source_file.read(), file_uuid)
+                    upload_file(api_token, container_name, encrypt(source_file.read(), encryption_key, signing_key), file_uuid)
                     print('[DONE] `%s` ~> `%s`' % (full_path, file_uuid))
     save_vfs(api_token, container_name, vfs, encryption_key, signing_key)
     return 0
 
-def read_file(*args, **kwargs):
+def get_file(*args, **kwargs):
+    if len(args) == 0 or '--help' in ''.join(args):
+        map(print, [
+            'About: This command retrieves a file from the virtual file system if it exists.',
+            '',
+            'Usage: $ dcc get <virtual path> (<local path>)',
+            '',
+            'By default this will output the contents of the file to standard output unless the `<local path>` is specified.',
+            'The `<local path>` can optionally include the filename otherwise the name of the file when uploaded will be used.'
+        ])
+        return 1
+    encryption_key, signing_key, api_token, human_container_name, container_name = prompt_userinfo()
+    vfs = load_vfs(api_token, container_name, encryption_key, signing_key)
+    vfs_exists, data = vfs.get_file_data(args[0])
+    if not vfs_exists:
+        print('Error: The path `%s` does not exist.' % args[0])
+        return 1
+    if len(args) >= 2: # if we have virtual path and local path
+        local_path = normpath(join(getcwd(), args[1].strip()))
+        if len(local_path) > 0:
+            local_filename = basename(local_path)
+            if len(local_filename) > 0 and '.' not in local_filename:
+                local_filename = ''
+            if len(local_filename) > 0:
+                local_path = local_path[:-len(local_filename)]
+            else:
+                local_filename = data[0]
+            if not exists(local_path):
+                makedirs(local_path)
+            with open(join(local_path, local_filename), 'w+') as output_file:
+                content = download_file(api_token, container_name, data[2])
+                output_file.write(decrypt(content, encryption_key, signing_key))
+                return 0
+    # else we do not have the local path, we need to output to standard out
+    content = download_file(api_token, container_name, data[2])
+    print(decrypt(content, encryption_key, signing_key))
     return 0
 
 def sync_files(*args, **kwargs):
+    encryption_key, signing_key, api_token, human_container_name, container_name = prompt_userinfo()
+    vfs = load_vfs(api_token, container_name, encryption_key, signing_key)
+    for _, (file_name, path, file_uuid) in vfs.files.iteritems():
+        path = path[:-len(basename(path))]
+        print('Attempting to write `%s` ~> `%s`' % (file_name, path))
+        if not exists(path):
+            makedirs(path)
+            print('  [OK] Created Path `%s`' % path)
+        decrypted_file = decrypt(download_file(api_token, container_name, file_uuid), encryption_key, signing_key)
+        print(' [OK] Downloaded and decrypted `%s`' % file_uuid)
+        with open(join(path, file_name), 'w+') as output_file:
+            output_file.write(decrypted_file)
+            print(' [OK] Wrote file `%s`' % file_name)
     return 0
 
 def show_help():
@@ -108,8 +192,18 @@ def show_help():
         'Commands:',
         '  init - creates password, virtual file system and info files',
         '  info - shows the keys, token, container name and file count',
+        '  tree - displays a tree of the virtual file system',
+        '  list - interactively browse the virtual file system', 
+        '  add - adds a new file to the virtual file system and uploads',
+        '  get - downloads an uploaded file to existing/specific location',
+        '  sync - downloads all uploaded files to the local file system',
         '  help - shows this help message',
         'For detailed command usage append `--help`',
+        '',
+        '[!] IMPORTANT',
+        'You must setup a Dropbox API Token first. Read this blog post:',
+        'https://blogs.dropbox.com/developers/2014/05/generate-an-access-token-for-your-own-account/',
+        ''
     ])
     return 0
 
@@ -120,6 +214,10 @@ if __name__ == '__main__':
     exit({
         'init': setup,
         'info': show_info,
+        'tree': show_tree,
+        'list': show_list,
         'add': add_file,
+        'get': get_file,
+        'sync': sync_files,
         'help': show_help,
     }.get(arg, partial(no_command, arg))(*argv[2:]))

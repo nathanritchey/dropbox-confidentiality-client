@@ -18,7 +18,7 @@ class VFS(object):
     def add_file(self, full_path):
         full_path = normpath(full_path)
         if full_path in self.files:
-            return file_info[2]
+            return self.files[full_path][2]
         file_info = [basename(full_path), full_path, '%s' % uuid4()]
         self.files[file_info[1]] = file_info
         vfs_pointer = self.tree
@@ -29,10 +29,10 @@ class VFS(object):
         vfs_pointer[file_info[0]] = file_info
         return file_info[2]
 
-    def get_file_uuid(self, path):
+    def get_file_data(self, path):
         path = normpath(join(getcwd(), path))
         if self.files.has_key(path):
-            return (True, self.files[path][2])
+            return (True, self.files[path])
         return (False, None)
 
     def list_files(self, path):
