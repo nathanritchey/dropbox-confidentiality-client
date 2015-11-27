@@ -1,13 +1,12 @@
 ﻿from __future__ import print_function
 from functools import partial
 from sys import argv, exit
-from os.path import join, splitext, normpath, basename
+from os.path import join, splitext, normpath, basename, isfile
 from os import urandom, getcwd
 from base64 import b64encode, b64decode
 from diceware import generate_password, prompt_password
 from encryption import encrypt, decrypt, make_key, get_key
-from client import save_passwd, read_passwd, save_vfs, load_vfs
-from uuid import uuid4
+from client import save_passwd, read_passwd, save_vfs, load_vfs, upload_file
 from random import randint
 import cPickle as pickle
 from pbkdf2 import PBKDF2
@@ -73,6 +72,27 @@ def show_info(*args, **kwargs):
     return 0
 
 def add_file(*args, **kwargs):
+    if len(args) == 0 or '--help' in ''.join(args):
+        map(print, [
+            'About: This command adds a file to Dropbox by encrypting and signing the file using your private key.',
+            '',
+            'Usage: $ dcc add <path,...>',
+            '',
+            'Specify one or more paths delimited by spaces. Paths to files can be absolute or relative but must',
+            'point to a file. Paths can refer to files outside of this directory.',
+        ])
+        return 1
+    encryption_key, signing_key, api_token, human_container_name, container_name = prompt_userinfo()
+    vfs = load_vfs(api_token, container_name, encryption_key, signing_key)
+    for arg in args:
+        if len(arg) > 0:
+            full_path = normpath(join(getcwd(), arg))
+            if isfile(full_path):
+                with open(full_path, 'r') as source_file:
+                    file_uuid = vfs.add_file(full_path)
+                    upload_file(api_token, container_name, source_file.read(), file_uuid)
+                    print('[DONE] `%s` ~> `%s`' % (full_path, file_uuid))
+    save_vfs(api_token, container_name, vfs, encryption_key, signing_key)
     return 0
 
 def read_file(*args, **kwargs):
@@ -84,11 +104,12 @@ def sync_files(*args, **kwargs):
 def show_help():
     map(print, [
         'Dropbox Confidentiality Client v1\n',
-        'Usage: $ dcc [command] <file>\n',
+        'Usage: $ dcc [command] (<path,...>)\n',
         'Commands:',
         '  init - creates password, virtual file system and info files',
         '  info - shows the keys, token, container name and file count',
         '  help - shows this help message',
+        'For detailed command usage append `--help`',
     ])
     return 0
 
@@ -99,5 +120,6 @@ if __name__ == '__main__':
     exit({
         'init': setup,
         'info': show_info,
+        'add': add_file,
         'help': show_help,
     }.get(arg, partial(no_command, arg))(*argv[2:]))

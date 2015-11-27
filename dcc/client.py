@@ -32,6 +32,13 @@ def read_file(db_client, container, file_name):
     except:
         return (False, None, None)
 
+def upload_file(api_token, container_name, file_contents, file_uuid):
+    return write_file(dropbox.Dropbox(api_token), file_contents, container_name, file_uuid)
+
+def download_file(api_token, container_name, file_uuid):
+    _, _, data = read_file(dropbox.Dropbox(api_token), container_name, file_uuid)
+    return data
+
 def save_vfs(api_token, container_name, vfs_instance, encryption_key, signing_key):
     db_client = dropbox.Dropbox(api_token)
     content = encrypt(pickle.dumps(vfs_instance), encryption_key, signing_key)

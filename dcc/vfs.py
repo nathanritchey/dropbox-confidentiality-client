@@ -16,7 +16,10 @@ class VFS(object):
         return len(self.files)
 
     def add_file(self, full_path):
-        file_info = [basename(full_path), normpath(full_path), '%s' % uuid4()]
+        full_path = normpath(full_path)
+        if full_path in self.files:
+            return file_info[2]
+        file_info = [basename(full_path), full_path, '%s' % uuid4()]
         self.files[file_info[1]] = file_info
         vfs_pointer = self.tree
         for component in file_info[1].split('/')[1:-1]:
