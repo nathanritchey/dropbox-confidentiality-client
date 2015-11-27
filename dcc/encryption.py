@@ -31,7 +31,7 @@ def make_key(password): # makes a 256-bit key, a 128-bit iv and a 64-bit passwor
   salt = urandom(8) # 64-bit
   key = urandom(32) # 256-bit key
   cipher = AES.new(PBKDF2(password, salt).read(32), AES.MODE_CBC, iv)
-  print('Key: %s' % b64encode(key))
+  print('Generated Key: %s' % b64encode(key))
   return '%s%s%s' % (salt, iv, cipher.encrypt(pad(key)))
 
 def get_key(password, key_matter):

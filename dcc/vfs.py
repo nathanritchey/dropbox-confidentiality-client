@@ -1,4 +1,4 @@
-from uuid import uuid4
+﻿from uuid import uuid4
 from os.path import basename, normpath, join
 from os import getcwd
 
@@ -12,20 +12,25 @@ class VFS(object):
         self.files = dict()
         self.tree = dict()
 
+    def __len__(self):
+        return len(self.files)
+
     def add_file(self, full_path):
         file_info = [basename(full_path), normpath(full_path), '%s' % uuid4()]
-        while True: # ensure no collisions in the virtual file system
-            if self.files.has_key(file_info[2]):
-                file_info[2] = '%s' % uuid4()
-            else:
-                self.files[file_info[2]] = file_info
-                break
+        self.files[file_info[1]] = file_info
         vfs_pointer = self.tree
         for component in file_info[1].split('/')[1:-1]:
             if not vfs_pointer.has_key(component):
                 vfs_pointer[component] = dict()
             vfs_pointer = vfs_pointer[component]
         vfs_pointer[file_info[0]] = file_info
+        return file_info[2]
+
+    def get_file_uuid(self, path):
+        path = normpath(join(getcwd(), path))
+        if self.files.has_key(path):
+            return (True, self.files[path][2])
+        return (False, None)
 
     def list_files(self, path):
         path = normpath(join(getcwd(), path)).split('/')[1:]
