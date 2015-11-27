@@ -177,7 +177,7 @@ def sync_files(*args, **kwargs):
         print('Attempting to write `%s` ~> `%s`' % (file_name, path))
         if not exists(path):
             makedirs(path)
-            print('  [OK] Created Path `%s`' % path)
+            print(' [OK] Created Path `%s`' % path)
         decrypted_file = decrypt(download_file(api_token, container_name, file_uuid), encryption_key, signing_key)
         print(' [OK] Downloaded and decrypted `%s`' % file_uuid)
         with open(join(path, file_name), 'w+') as output_file:
