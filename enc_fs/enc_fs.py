@@ -181,7 +181,8 @@ class Passthrough(Operations):
         #write the actual file. The first 80 bytes of filedata are the 
         #hex digest + the iv. The last "padlength" bytes are block padding
         os.lseek(fh, 0, os.SEEK_SET)
-        return os.write(fh, filedata[self.metadata_header_length:(-1*padlength)])
+        bytes_written = os.write(fh, filedata[self.metadata_header_length:(-1*padlength)])
+        return min(len(buf), bytes_written)
 
     def truncate(self, path, length, fh=None):
         full_path = self._full_path(path)
