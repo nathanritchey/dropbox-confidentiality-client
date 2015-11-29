@@ -11,6 +11,7 @@ from encryption import encrypt, decrypt, padding_length
 import os
 import sys
 import errno
+import hashlib
 
 from fuse import FUSE, FuseOSError, Operations
 
@@ -42,15 +43,13 @@ class Passthrough(Operations):
     def _metadata_file(self, partial):
         if partial.startswith("/"):
             partial = partial[1:]
-        path = os.path.join(self.root, partial)
-        (head, tail) = os.path.split(path)
 
         #has a race condition, but good enough for now
-        metadatadir = head + '/metadata'
+        metadatadir = os.path.join(self.root, 'metadata')
         if not os.path.exists(metadatadir):
             os.makedirs(metadatadir)
 
-        return metadatadir + '/.' + tail
+        return os.path.join(metadatadir, '.' + hashlib.md5(partial).hexdigest())
 
     # Filesystem methods
     # ==================
