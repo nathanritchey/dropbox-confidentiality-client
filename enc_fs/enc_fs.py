@@ -165,13 +165,18 @@ class Passthrough(Operations):
 
         #compute the entire plaintext to be written to the file
         #currently does not support writing less than the entire file
-        #not sure if there's a performance hit for assigning buf to plaintext here
         plaintext = buf
-        if offset > 0:
+        try:
             f = open(fullpath, 'r')
-            data = self.decrypt_with_metadata(path, f.read())
-            plaintext = data[:offset] + buf + data[(offset + len(buf)):]
+            data = f.read()
+
+            #prevent useless metadata files. should clean them on deletes / truncates
+            if len(data) > 0:
+                data = self.decrypt_with_metadata(path, data)
+                plaintext = data[:offset] + buf + data[(offset + len(buf)):]
             f.close()
+        except IOError:
+            plaintext = buf
         
         #encrypt and write the metadata file
         filedata = encrypt(plaintext, self.encryption_key, self.signing_key)
